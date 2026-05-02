@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title th:text="${facture.id == null ? 'Nouvelle Facture' : 'Modifier Facture'}">Facture Form</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2" th:text="${facture.id == null ? 'Nouvelle Proposition DV' : 'Modifier la Facture'}">Facture Form</h1>
+        </div>
+
+        <form th:action="@{/factures/enregistrer}" th:object="${facture}" method="post" id="factureForm">
+            <input type="hidden" th:field="*{id}">
+            
+            <div class="row g-4">
+                <!-- Header Info -->
+                <div class="col-md-8">
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Informations Générales</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Client</label>
+                                    <select th:field="*{clientId}" class="form-select form-select-sm" required>
+                                        <option value="">-- Sélectionner un client --</option>
+                                        <option th:each="c : ${clients}" th:value="${c.id}" th:text="${c.raisonSociale}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">N° Dossier (Dovis)</label>
+                                    <input type="text" th:field="*{numeroDovis}" class="form-control form-control-sm" placeholder="Ex: DV-2024-001">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Date Proposition</label>
+                                    <input type="date" th:field="*{dateProposition}" class="form-control form-control-sm" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Date Fin Validité</label>
+                                    <input type="date" th:field="*{dateFinValidite}" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Mode de Règlement</label>
+                                    <select th:field="*{modeReglement}" class="form-select form-select-sm">
+                                        <option value="">-- Choisir --</option>
+                                        <option th:each="m : ${modes}" th:value="${m}" th:text="${m.libelle}"></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items Section -->
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Prestations / Produits</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addLigne()">
+                                <i class="fa-solid fa-plus me-1"></i> Ajouter une ligne
+                            </button>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-hover mb-0" id="lignesTable">
+                                <thead class="table-light small">
+                                    <tr>
+                                        <th style="width: 45%;">Désignation</th>
+                                        <th style="width: 10%;">Qté</th>
+                                        <th style="width: 15%;">P.U. HT (MAD)</th>
+                                        <th style="width: 10%;">TVA %</th>
+                                        <th style="width: 15%;" class="text-end">Total HT</th>
+                                        <th style="width: 5%;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="ligne, iter : *{lignes}" class="ligne-row">
+                                        <td>
+                                            <input type="text" th:field="*{lignes[__${iter.index}__].designation}" class="form-control form-control-sm" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" step="0.1" th:field="*{lignes[__${iter.index}__].quantite}" class="form-control form-control-sm qty-input" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" step="0.01" th:field="*{lignes[__${iter.index}__].prixUnitaireHT}" class="form-control form-control-sm price-input" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" step="1" th:field="*{lignes[__${iter.index}__].tauxTVA}" class="form-control form-control-sm tva-input" required>
+                                        </td>
+                                        <td class="text-end">
+                                            <input type="text" readonly class="form-control-plaintext form-control-sm fw-bold text-end line-total" value="0.00 MAD">
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-link text-danger p-0" onclick="removeLigne(this)">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary & Status -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-0 mb-4 sticky-top" style="top: 2rem;">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">Récapitulatif</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Total HT</span>
+                                <span id="totalHT" class="fw-bold">0.00 MAD</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Total TVA</span>
+                                <span id="totalTVA" class="fw-bold">0.00 MAD</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-4">
+                                <span class="h5 mb-0">TOTAL TTC</span>
+                                <span id="totalTTC" class="h5 mb-0 text-primary">0.00 MAD</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Statut de la Facture</label>
+                                <select th:field="*{statutFacture}" class="form-select form-select-sm" required>
+                                    <option th:each="s : ${statuts}" th:value="${s}" th:text="${s.libelle}"></option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Observations</label>
+                                <textarea th:field="*{observations}" class="form-control form-control-sm" rows="4" placeholder="Notes visibles sur le document..."></textarea>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa-solid fa-floppy-disk me-1"></i> Enregistrer la facture
+                                </button>
+                                <a th:href="@{/factures}" class="btn btn-outline-secondary">Annuler</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            $(document).ready(function() {
+                const DRAFT_KEY = 'facture_draft_' + (/*[[${facture.id != null ? facture.id : 'new'}]]*/ 'new');
+                
+                function saveDraft() {
+                    const formData = {};
+                    $('form input, form select, form textarea').each(function() {
+                        const name = $(this).attr('name');
+                        if (name) {
+                            formData[name] = $(this).val();
+                        }
+                    });
+                    localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
+                }
+
+                function loadDraft() {
+                    const saved = localStorage.getItem(DRAFT_KEY);
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        if (confirm('Un brouillon non enregistré a été trouvé. Voulez-vous le restaurer ?')) {
+                            Object.keys(data).forEach(name => {
+                                const $el = $(`[name="${name}"]`);
+                                if ($el.length) {
+                                    $el.val(data[name]);
+                                }
+                            });
+                            updateTotals();
+                        } else {
+                            localStorage.removeItem(DRAFT_KEY);
+                        }
+                    }
+                }
+
+                function updateTotals() {
+                    let totalHT = 0;
+                    let totalTVA = 0;
+
+                    $('.ligne-row').each(function() {
+                        const qty = parseFloat($(this).find('.qty-input').val()) || 0;
+                        const price = parseFloat($(this).find('.price-input').val()) || 0;
+                        const tvaRate = parseFloat($(this).find('.tva-input').val()) || 0;
+
+                        const lineHT = qty * price;
+                        const lineTVA = lineHT * (tvaRate / 100);
+
+                        $(this).find('.line-total').val(lineHT.toLocaleString('fr-MA', {minimumFractionDigits: 2}) + ' MAD');
+                        
+                        totalHT += lineHT;
+                        totalTVA += lineTVA;
+                    });
+
+                    $('#totalHT').text(totalHT.toLocaleString('fr-MA', {minimumFractionDigits: 2}) + ' MAD');
+                    $('#totalTVA').text(totalTVA.toLocaleString('fr-MA', {minimumFractionDigits: 2}) + ' MAD');
+                    $('#totalTTC').text((totalHT + totalTVA).toLocaleString('fr-MA', {minimumFractionDigits: 2}) + ' MAD');
+                }
+
+                window.addLigne = function() {
+                    const index = $('.ligne-row').length;
+                    const newRow = `
+                        <tr class="ligne-row">
+                            <td><input type="text" name="lignes[${index}].designation" class="form-control form-control-sm" required></td>
+                            <td><input type="number" step="0.1" name="lignes[${index}].quantite" class="form-control form-control-sm qty-input" required value="1"></td>
+                            <td><input type="number" step="0.01" name="lignes[${index}].prixUnitaireHT" class="form-control form-control-sm price-input" required value="0"></td>
+                            <td><input type="number" step="1" name="lignes[${index}].tauxTVA" class="form-control form-control-sm tva-input" required value="20"></td>
+                            <td class="text-end"><input type="text" readonly class="form-control-plaintext form-control-sm fw-bold text-end line-total" value="0.00 MAD"></td>
+                            <td class="text-center"><button type="button" class="btn btn-link text-danger p-0" onclick="removeLigne(this)"><i class="fa-solid fa-trash-can"></i></button></td>
+                        </tr>
+                    `;
+                    $('#lignesTable tbody').append(newRow);
+                    saveDraft();
+                };
+
+                window.removeLigne = function(btn) {
+                    if ($('.ligne-row').length > 1) {
+                        $(btn).closest('tr').remove();
+                        updateTotals();
+                        saveDraft();
+                    }
+                };
+
+                $(document).on('input change', '.qty-input, .price-input, .tva-input', function() {
+                    updateTotals();
+                });
+
+                $(document).on('input change', 'form input, form select, form textarea', function() {
+                    saveDraft();
+                });
+
+                $('form').on('submit', function() {
+                    localStorage.removeItem(DRAFT_KEY);
+                });
+
+                updateTotals();
+                setTimeout(loadDraft, 300);
+            });
+        </script>
+    </th:block>
+</body>
+</html>

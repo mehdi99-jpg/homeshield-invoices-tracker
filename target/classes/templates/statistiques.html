@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Statistiques détaillées</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Header & Period Selector -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Statistiques</h1>
+            
+            <form id="periodForm" class="row g-2 align-items-center" th:action="@{/statistiques}" method="get">
+                <div class="col-auto">
+                    <select name="period" id="periodSelect" class="form-select form-select-sm" onchange="toggleCustomDates()">
+                        <option value="week" th:selected="${period == 'week'}">Cette semaine</option>
+                        <option value="month" th:selected="${period == 'month'}">Ce mois</option>
+                        <option value="year" th:selected="${period == 'year'}">Cette année</option>
+                        <option value="custom" th:selected="${period == 'custom'}">Période personnalisée</option>
+                    </select>
+                </div>
+                <div id="customDates" class="col-auto d-flex gap-2" th:style="${period == 'custom' ? '' : 'display: none !important;'}">
+                    <input type="date" name="start" class="form-control form-control-sm" th:value="${startDate}">
+                    <input type="date" name="end" class="form-control form-control-sm" th:value="${endDate}">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-sm btn-primary">Appliquer</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- KPI Summary for selected period -->
+        <div class="row g-4 mb-3">
+            <div class="col-md-4 col-lg-2">
+                <div class="card shadow-sm border-0 bg-primary text-white h-100">
+                    <div class="card-body">
+                        <h6 class="text-uppercase small fw-bold opacity-75">CA Encaissé</h6>
+                        <h4 class="mb-0 fw-bold" th:text="${#numbers.formatDecimal(caMois, 1, 2, 'COMMA')} + ' MAD'">0 MAD</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card shadow-sm border-0 bg-success text-white h-100">
+                    <div class="card-body">
+                        <h6 class="text-uppercase small fw-bold opacity-75">Factures</h6>
+                        <h4 class="mb-0 fw-bold" th:text="${nbFacturesMois}">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card shadow-sm border-0 bg-warning text-dark h-100">
+                    <div class="card-body">
+                        <h6 class="text-uppercase small fw-bold opacity-75">Impayées</h6>
+                        <h4 class="mb-0 fw-bold" th:text="${nbFacturesImpayees}">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card shadow-sm border-0 h-100" th:classappend="${countOverdue > 0 ? 'bg-danger text-white' : 'bg-light text-muted'}">
+                    <div class="card-body">
+                        <h6 class="text-uppercase small fw-bold opacity-75">En Retard</h6>
+                        <h4 class="mb-0 fw-bold" th:text="${countOverdue}">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card shadow-sm border-0 bg-info text-white h-100">
+                    <div class="card-body">
+                        <h6 class="text-uppercase small fw-bold opacity-75">Recouvrement</h6>
+                        <h4 class="mb-0 fw-bold" th:text="${recoveryRate} + '%'">0%</h4>
+                        <div class="progress mt-2" style="height: 4px; background: rgba(255,255,255,0.3);">
+                            <div class="progress-bar bg-white" th:style="'width: ' + ${recoveryRate} + '%'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <div class="card shadow-sm border-0 bg-dark text-white h-100">
+                    <div class="card-body">
+                        <h6 class="text-uppercase small fw-bold opacity-75">Panier Moyen</h6>
+                        <h4 class="mb-0 fw-bold" th:text="${#numbers.formatDecimal(avgBasket, 1, 0, 'COMMA')} + ' MAD'">0 MAD</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Sentence -->
+        <div class="card border-0 shadow-sm mb-4 bg-light">
+            <div class="card-body py-3">
+                <i class="fa-solid fa-circle-info text-primary me-2"></i>
+                <span class="text-dark">
+                    Sur la période du <strong th:text="${#temporals.format(startDate, 'dd/MM/yyyy')}">01/01/2024</strong> 
+                    au <strong th:text="${#temporals.format(endDate, 'dd/MM/yyyy')}">31/01/2024</strong>, 
+                    vous avez émis <strong th:text="${nbFacturesMois}">0</strong> factures pour un chiffre d'affaires encaissé de 
+                    <strong th:text="${#numbers.formatDecimal(caMois, 1, 2, 'COMMA')} + ' MAD'">0 MAD</strong>, 
+                    dont <strong th:classappend="${countOverdue > 0 ? 'text-danger' : ''}" th:text="${countOverdue}">0</strong> 
+                    <span th:text="${countOverdue > 1 ? 'factures en retard' : 'facture en retard'}">facture en retard</span>.
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- 1. Revenue Comparison -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Comparatif CA (Année en cours vs Année précédente) en MAD</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 350px;">
+                            <canvas id="comparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 2. Top 5 Clients -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Top 5 Clients (sur la période)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 350px;">
+                            <canvas id="topClientsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- 3. Status Breakdown -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Répartition mensuelle des statuts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 300px;">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 4. Average Invoice Value -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Panier moyen par mois (MAD)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="height: 300px;">
+                            <canvas id="avgValueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            function toggleCustomDates() {
+                const select = document.getElementById('periodSelect');
+                const customDates = document.getElementById('customDates');
+                if (select.value === 'custom') {
+                    customDates.style.setProperty('display', 'flex', 'important');
+                } else {
+                    customDates.style.setProperty('display', 'none', 'important');
+                }
+            }
+
+            const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+            // 1. Comparison Chart
+            const revThisYear = /*[[${revenueThisYear}]]*/ [];
+            const revLastYear = /*[[${revenueLastYear}]]*/ [];
+            new Chart(document.getElementById('comparisonChart'), {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Cette année',
+                            data: revThisYear,
+                            backgroundColor: '#0d6efd'
+                        },
+                        {
+                            label: 'Année dernière',
+                            data: revLastYear,
+                            backgroundColor: 'rgba(108, 117, 125, 0.5)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString('fr-MA', { style: 'decimal', minimumFractionDigits: 2 }) + ' MAD';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. Top Clients (Horizontal)
+            const topClientsRaw = /*[[${topClients}]]*/ [];
+            new Chart(document.getElementById('topClientsChart'), {
+                type: 'bar',
+                data: {
+                    labels: topClientsRaw.map(row => row[0]),
+                    datasets: [{
+                        label: 'Revenue (MAD)',
+                        data: topClientsRaw.map(row => row[1]),
+                        backgroundColor: '#198754'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.x.toLocaleString('fr-MA', { style: 'decimal', minimumFractionDigits: 2 }) + ' MAD';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { beginAtZero: true }
+                    },
+                    animation: {
+                        onComplete: function() {
+                            const chart = this;
+                            const ctx = chart.ctx;
+                            ctx.font = 'bold 10px sans-serif';
+                            ctx.textAlign = 'left';
+                            ctx.textBaseline = 'middle';
+                            chart.data.datasets.forEach(function(dataset, i) {
+                                const meta = chart.getDatasetMeta(i);
+                                meta.data.forEach(function(bar, index) {
+                                    const data = dataset.data[index].toLocaleString('fr-MA', { maximumFractionDigits: 0 });
+                                    ctx.fillStyle = '#666';
+                                    ctx.fillText(data + ' MAD', bar.x + 5, bar.y);
+                                });
+                            });
+                        }
+                    }
+                }
+            });
+
+            // 3. Status Breakdown (Stacked)
+            const statusData = /*[[${statusBreakdown}]]*/ {};
+            const statusLabels = Object.keys(statusData);
+            const statusColors = {
+                'Brouillon': '#6c757d',
+                'En attente': '#ffc107',
+                'Livrée': '#0dcaf0',
+                'Payée': '#198754',
+                'Annulée': '#212529',
+                'En retard': '#dc3545'
+            };
+            
+            new Chart(document.getElementById('statusChart'), {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: statusLabels.map(label => ({
+                        label: label,
+                        data: statusData[label],
+                        backgroundColor: statusColors[label] || '#ddd'
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    }
+                }
+            });
+
+            // 4. Average Value Chart
+            const avgValues = /*[[${avgInvoiceValue}]]*/ [];
+            const labelsLimited = /*[[${chartLabelsLimited}]]*/ [];
+            new Chart(document.getElementById('avgValueChart'), {
+                type: 'line',
+                data: {
+                    labels: labelsLimited,
+                    datasets: [{
+                        label: 'Panier moyen',
+                        data: avgValues,
+                        borderColor: '#fd7e14',
+                        backgroundColor: 'rgba(253, 126, 20, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString('fr-MA', { style: 'decimal', minimumFractionDigits: 2 }) + ' MAD';
+                                }
+                            }
+                        }
+                    },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+            /*]]>*/
+        </script>
+    </th:block>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Facture Status Badge -->
+<div th:fragment="factureStatus(status)" th:switch="${status.name()}">
+    <span th:case="'BROUILLON'" class="badge bg-secondary" th:text="${status.libelle}">Brouillon</span>
+    <span th:case="'EN_ATTENTE'" class="badge bg-warning text-dark" th:text="${status.libelle}">En attente</span>
+    <span th:case="'LIVREE'" class="badge bg-info text-dark" th:text="${status.libelle}">Livrée</span>
+    <span th:case="'PAYEE'" class="badge bg-success" th:text="${status.libelle}">Payée</span>
+    <span th:case="'EN_RETARD'" class="badge bg-danger" th:text="${status.libelle}">En retard</span>
+    <span th:case="'ANNULEE'" class="badge bg-dark text-white text-decoration-line-through" th:text="${status.libelle}">Annulée</span>
+    <span th:case="*" class="badge bg-secondary" th:text="${status.libelle}">Statut</span>
+</div>
+
+<!-- Livraison Status Badge -->
+<div th:fragment="livraisonStatus(status)" th:switch="${status.name()}">
+    <span th:case="'EN_ATTENTE'" class="badge bg-warning text-dark" th:text="${status.libelle}">En attente</span>
+    <span th:case="'EN_COURS'" class="badge bg-info text-dark" th:text="${status.libelle}">En cours</span>
+    <span th:case="'LIVREE'" class="badge bg-success" th:text="${status.libelle}">Livrée</span>
+    <span th:case="'ECHEC'" class="badge bg-danger" th:text="${status.libelle}">Échec</span>
+    <span th:case="*" class="badge bg-secondary" th:text="${status.libelle}">Statut</span>
+</div>
+
+<!-- Passage Status Badge -->
+<div th:fragment="passageStatus(status)" th:switch="${status.name()}">
+    <span th:case="'PLANIFIE'" class="badge bg-info text-dark" th:text="${status.libelle}">Planifié</span>
+    <span th:case="'EN_COURS'" class="badge bg-warning text-dark" style="background-color: #fd7e14 !important; color: white !important;" th:text="${status.libelle}">En cours</span>
+    <span th:case="'EFFECTUE'" class="badge bg-success" th:text="${status.libelle}">Effectué</span>
+    <span th:case="'REPORTE'" class="badge bg-warning text-dark" th:text="${status.libelle}">Reporté</span>
+    <span th:case="'ANNULE'" class="badge bg-secondary" th:text="${status.libelle}">Annulé</span>
+    <span th:case="*" class="badge bg-secondary" th:text="${status.libelle}">Statut</span>
+</div>
+
+<!-- BL Status Badge (uses StatutLivraison) -->
+<div th:fragment="blStatus(status)" th:switch="${status.name()}">
+    <span th:case="'EN_ATTENTE'" class="badge bg-warning text-dark" th:text="${status.libelle}">En attente</span>
+    <span th:case="'EN_COURS'" class="badge bg-info text-dark" th:text="${status.libelle}">En cours</span>
+    <span th:case="'LIVREE'" class="badge bg-success" th:text="${status.libelle}">Livrée</span>
+    <span th:case="*" class="badge bg-secondary" th:text="${status.libelle}">Statut</span>
+</div>
+
+</body>
+</html>

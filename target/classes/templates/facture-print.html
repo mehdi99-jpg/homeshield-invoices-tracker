@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Facture ' + ${facture.numeroFacture}">Facture</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .print-container {
+            background-color: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 20px auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .logo-section {
+            color: #1a3a2a;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .header-info {
+            text-align: right;
+            font-size: 14px;
+        }
+        .client-section {
+            margin: 40px 0;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            border-radius: 8px;
+            width: 60%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .table thead th {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .totals-block {
+            margin-top: 30px;
+            width: 320px;
+            margin-left: auto;
+        }
+        .totals-block .row {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .total-ttc-row {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            font-weight: bold;
+            font-size: 18px;
+            padding: 10px !important;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .print-actions {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+            }
+            .print-container {
+                margin: 0;
+                box-shadow: none;
+                width: 100%;
+                padding: 10mm;
+            }
+            .print-actions {
+                display: none;
+            }
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="print-actions">
+        <button onclick="window.print()" class="btn btn-primary btn-lg shadow">
+            <i class="fa-solid fa-print me-2"></i> Imprimer
+        </button>
+        <a th:href="@{/factures/{id}(id=${facture.id})}" class="btn btn-secondary btn-lg shadow">
+            <i class="fa-solid fa-arrow-left me-2"></i> Retour
+        </a>
+    </div>
+
+    <div class="print-container">
+        <!-- Header -->
+        <div class="row align-items-start mb-5">
+            <div class="col-6">
+                <div class="logo-section">
+                    <i class="fa-solid fa-shield-halved me-2"></i> HomeShield
+                </div>
+                <div class="mt-2 small text-muted">
+                    Expertise Anti-Nuisibles & Désinfection<br>
+                    15 Avenue des F.A.R, Tour Habous<br>
+                    20000 Casablanca, Maroc<br>
+                    Contact: contact@homeshield.ma | Tél: 05 22 12 34 56
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="header-info">
+                    <h2 class="text-uppercase mb-3" style="letter-spacing: 2px;">Proposition DV</h2>
+                    <div><strong>N° de proposition :</strong> <span th:text="${facture.numeroDovis != null ? facture.numeroDovis : facture.numeroFacture}">DV-2024-001</span></div>
+                    <div><strong>Date :</strong> <span th:text="${#temporals.format(facture.dateProposition, 'dd/MM/yyyy')}">01/01/2024</span></div>
+                    <div th:if="${facture.dateFinValidite}"><strong>Valable jusqu'au :</strong> <span th:text="${#temporals.format(facture.dateFinValidite, 'dd/MM/yyyy')}">31/01/2024</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client info centered -->
+        <div class="client-section">
+            <div class="text-uppercase text-muted small mb-1">Destinataire</div>
+            <h4 class="mb-2" th:text="${facture.client.raisonSociale}">Nom du Client</h4>
+            <div th:text="${facture.client.adresse}">Adresse du client</div>
+            <div>
+                <span th:text="${facture.client.codePostal}">20000</span> 
+                <span th:text="${facture.client.ville}">Casablanca</span>
+            </div>
+            <div class="fw-bold mt-1">Maroc</div>
+        </div>
+
+        <!-- Items Table -->
+        <table class="table mt-5">
+            <thead>
+                <tr>
+                    <th>Désignation</th>
+                    <th class="text-center" style="width: 80px;">Qté</th>
+                    <th class="text-end" style="width: 140px;">PU HT</th>
+                    <th class="text-center" style="width: 80px;">TVA</th>
+                    <th class="text-end" style="width: 140px;">Total HT</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="ligne : ${facture.lignes}">
+                    <td th:text="${ligne.designation}">Installation caméra IP</td>
+                    <td class="text-center" th:text="${ligne.quantite}">1</td>
+                    <td class="text-end" th:text="${#numbers.formatDecimal(ligne.prixUnitaireHT, 1, 2, 'COMMA')} + ' MAD'">1200,00 MAD</td>
+                    <td class="text-center" th:text="${ligne.tauxTVA} + '%'">20%</td>
+                    <td class="text-end" th:text="${#numbers.formatDecimal(ligne.totalHT, 1, 2, 'COMMA')} + ' MAD'">1200,00 MAD</td>
+                </tr>
+                <tr th:if="${#lists.size(facture.lignes) < 5}" th:each="i : ${#numbers.sequence(#lists.size(facture.lignes) + 1, 5)}">
+                    <td colspan="5" style="height: 40px;">&nbsp;</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Totals -->
+        <div class="totals-block">
+            <div class="row">
+                <div class="col-7 text-end">Total HT :</div>
+                <div class="col-5 text-end" th:text="${#numbers.formatDecimal(facture.totalHT, 1, 2, 'COMMA')} + ' MAD'">0,00 MAD</div>
+            </div>
+            <div class="row">
+                <div class="col-7 text-end">Total TVA 20% :</div>
+                <div class="col-5 text-end" th:text="${#numbers.formatDecimal(facture.totalTVA, 1, 2, 'COMMA')} + ' MAD'">0,00 MAD</div>
+            </div>
+            <div class="row total-ttc-row mt-2">
+                <div class="col-6 text-end">Total TTC :</div>
+                <div class="col-6 text-end" th:text="${#numbers.formatDecimal(facture.totalTTC, 1, 2, 'COMMA')} + ' MAD'">0,00 MAD</div>
+            </div>
+        </div>
+
+        <!-- Footer / Observations -->
+        <div class="mt-5 pt-5 border-top small text-muted">
+            <div th:if="${facture.observations}" class="mb-4">
+                <strong>Observations :</strong><br>
+                <span th:text="${facture.observations}">Observations...</span>
+            </div>
+            <div class="row mt-5 pt-4">
+                <div class="col-4">
+                    <strong>Cachet de l'entreprise</strong>
+                    <div style="height: 100px; border: 1px dashed #ddd; margin-top: 10px;"></div>
+                </div>
+                <div class="col-4 offset-4 text-center">
+                    <strong>Signature client</strong>
+                    <div class="small">(précédée de la mention "Bon pour accord")</div>
+                    <div style="height: 100px; border: 1px dashed #ddd; margin-top: 10px;"></div>
+                </div>
+            </div>
+            <div class="text-center mt-5">
+                <p>HomeShield Maroc - ICE: 001234567890012 - RC Casablanca: 123456 - IF: 45678901</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

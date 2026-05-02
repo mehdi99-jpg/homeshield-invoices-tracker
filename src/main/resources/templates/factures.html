@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Gestion des Factures</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Gestion des Factures</h1>
+            <div class="btn-toolbar mb-2 mb-md-0 gap-2">
+                <a th:href="@{/factures/export/excel(clientName=${clientName}, statut=${statut}, month=${month}, year=${year}, minAmount=${minAmount}, maxAmount=${maxAmount})}" class="btn btn-sm btn-outline-success">
+                    <i class="fa-solid fa-file-excel me-1"></i> Exporter Excel
+                </a>
+                <a th:href="@{/factures/nouveau}" class="btn btn-primary">
+                    <i class="fa-solid fa-plus me-1"></i> Nouvelle Facture
+                </a>
+            </div>
+        </div>
+
+        <!-- Advanced Filter Bar -->
+        <div class="card mb-4 border-0">
+            <div class="card-body p-4">
+                <form th:action="@{/factures}" method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Client</label>
+                        <input type="text" class="form-control form-control-sm" name="clientName" th:value="${clientName}" placeholder="Nom du client...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Statut</label>
+                        <select class="form-select form-select-sm" name="statut">
+                            <option value="">Tous</option>
+                            <option th:each="s : ${statuts}" th:value="${s}" th:text="${s.libelle}" th:selected="${s == statut}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Période</label>
+                        <div class="input-group input-group-sm">
+                            <select class="form-select" name="month">
+                                <option value="">Mois</option>
+                                <option th:each="m, iter : ${months}" th:value="${iter.index + 1}" th:text="${m}" th:selected="${iter.index + 1 == month}"></option>
+                            </select>
+                            <select class="form-select" name="year">
+                                <option value="">Année</option>
+                                <option th:each="y : ${years}" th:value="${y}" th:text="${y}" th:selected="${y == year}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Montant TTC (MAD)</label>
+                        <div class="input-group input-group-sm">
+                            <input type="number" step="0.01" class="form-control" name="minAmount" th:value="${minAmount}" placeholder="Min">
+                            <input type="number" step="0.01" class="form-control" name="maxAmount" th:value="${maxAmount}" placeholder="Max">
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                            <i class="fa-solid fa-filter me-1"></i> Filtrer
+                        </button>
+                        <a th:href="@{/factures}" class="btn btn-sm btn-outline-secondary">X</a>
+                    </div>
+                    
+                    <!-- Hidden sorting fields -->
+                    <input type="hidden" name="sortField" th:value="${sortField}">
+                    <input type="hidden" name="sortDir" th:value="${sortDir}">
+                </form>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card border-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <a class="text-dark text-decoration-none" th:href="@{/factures(page=${facturePage.number}, sortField='numeroFacture', sortDir=${sortField == 'numeroFacture' && sortDir == 'asc' ? 'desc' : 'asc'}, clientName=${clientName}, statut=${statut}, month=${month}, year=${year}, minAmount=${minAmount}, maxAmount=${maxAmount})}">
+                                    N° Facture <i class="fa-solid ms-1" th:classappend="${sortField == 'numeroFacture' ? (sortDir == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort opacity-50'}"></i>
+                                </a>
+                            </th>
+                            <th>Client</th>
+                            <th>
+                                <a class="text-dark text-decoration-none" th:href="@{/factures(page=${facturePage.number}, sortField='dateProposition', sortDir=${sortField == 'dateProposition' && sortDir == 'asc' ? 'desc' : 'asc'}, clientName=${clientName}, statut=${statut}, month=${month}, year=${year}, minAmount=${minAmount}, maxAmount=${maxAmount})}">
+                                    Date <i class="fa-solid ms-1" th:classappend="${sortField == 'dateProposition' ? (sortDir == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort opacity-50'}"></i>
+                                </a>
+                            </th>
+                            <th>
+                                <a class="text-dark text-decoration-none" th:href="@{/factures(page=${facturePage.number}, sortField='totalTTC', sortDir=${sortField == 'totalTTC' && sortDir == 'asc' ? 'desc' : 'asc'}, clientName=${clientName}, statut=${statut}, month=${month}, year=${year}, minAmount=${minAmount}, maxAmount=${maxAmount})}">
+                                    Montant TTC <i class="fa-solid ms-1" th:classappend="${sortField == 'totalTTC' ? (sortDir == 'asc' ? 'fa-sort-up' : 'fa-sort-down') : 'fa-sort opacity-50'}"></i>
+                                </a>
+                            </th>
+                            <th>Statut</th>
+                            <th style="width: 120px;">Passages</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="f : ${facturePage.content}" th:onclick="'window.location.href=\'/factures/' + ${f.id} + '\''">
+                            <td>
+                                <span class="fw-bold" th:text="${f.numeroFacture}">DV-XXXX</span>
+                                <span th:if="${f.bonDeLivraison != null}" class="badge bg-success bg-opacity-10 text-success ms-1" title="BL existant">
+                                    <i class="fa-solid fa-truck-fast" style="font-size: 0.7rem;"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-medium text-dark" th:text="${f.client.raisonSociale}">Nom Client</div>
+                                <div class="text-muted" style="font-size: 11px;" th:text="${f.client.ville}">Ville</div>
+                            </td>
+                            <td th:text="${#temporals.format(f.dateProposition, 'dd/MM/yyyy')}">Date</td>
+                            <td class="fw-bold text-dark" th:text="${#numbers.formatDecimal(f.totalTTC, 1, 2, 'COMMA')} + ' MAD'">0 MAD</td>
+                            <td>
+                                <div th:replace="~{fragments/badges :: factureStatus(${f.statutFacture})}"></div>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 6px; width: 80px;" th:title="${#lists.size(f.passages)} + '/3 passages'">
+                                    <div class="progress-bar" role="progressbar" 
+                                         th:style="'width: ' + (${#lists.size(f.passages)} * 33.33) + '%'"
+                                         th:classappend="${#lists.size(f.passages) >= 3 ? 'bg-success' : 'bg-primary'}"></div>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size: 10px;" th:text="${#lists.size(f.passages)} + '/3 effectués'"></div>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a th:href="@{/factures/{id}(id=${f.id})}" class="btn btn-sm btn-light text-primary" onclick="event.stopPropagation()"><i class="fa-solid fa-eye"></i></a>
+                                    <a th:href="@{/factures/{id}/modifier(id=${f.id})}" class="btn btn-sm btn-light text-secondary" onclick="event.stopPropagation()"><i class="fa-solid fa-pen"></i></a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="card-footer bg-white border-0 py-4" th:if="${facturePage.totalPages > 1}">
+                <nav aria-label="Pagination">
+                    <ul class="pagination pagination-sm justify-content-center mb-0 gap-1">
+                        <li class="page-item" th:classappend="${facturePage.first ? 'disabled' : ''}">
+                            <a class="page-link border-0 rounded-circle" th:href="@{/factures(page=${facturePage.number - 1}, sortField=${sortField}, sortDir=${sortDir}, clientName=${clientName}, statut=${statut}, month=${month}, year=${year}, minAmount=${minAmount}, maxAmount=${maxAmount})}"><i class="fa-solid fa-chevron-left"></i></a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, facturePage.totalPages - 1)}" th:classappend="${i == facturePage.number ? 'active' : ''}">
+                            <a class="page-link border-0 rounded-circle shadow-none" 
+                               th:classappend="${i == facturePage.number ? 'bg-primary text-white' : 'text-dark'}"
+                               th:href="@{/factures(page=${i}, sortField=${sortField}, sortDir=${sortDir}, clientName=${clientName}, statut=${statut}, month=${month}, year=${year}, minAmount=${minAmount}, maxAmount=${maxAmount})}" th:text="${i + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${facturePage.last ? 'disabled' : ''}">
+                            <a class="page-link border-0 rounded-circle" th:href="@{/factures(page=${facturePage.number + 1}, sortField=${sortField}, sortDir=${sortDir}, clientName=${clientName}, statut=${statut}, month=${month}, year=${year}, minAmount=${minAmount}, maxAmount=${maxAmount})}"><i class="fa-solid fa-chevron-right"></i></a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            $(document).keydown(function(e) {
+                if (e.ctrlKey && e.key === 'n') {
+                    e.preventDefault();
+                    window.location.href = /*[[@{/factures/nouveau}]]*/ '/factures/nouveau';
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html>

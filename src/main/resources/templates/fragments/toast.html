@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="toast" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+        <!-- Success Toast -->
+        <div th:if="${success}" id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fa-solid fa-check-circle me-2"></i>
+                    <span th:text="${success}">Succès !</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <!-- Error Toast -->
+        <div th:if="${error}" id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    <span th:text="${error}">Une erreur est survenue.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+
+        <script th:if="${success != null or error != null}">
+            $(document).ready(function() {
+                $('.toast').each(function() {
+                    let t = new bootstrap.Toast(this, { delay: 5000 });
+                    t.show();
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

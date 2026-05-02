@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$LAYOUT_TITLE - $CONTENT_TITLE">HomeShield CRM</title>
+    
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/homeshield-theme.css}">
+
+    <style>
+        :root {
+            --sidebar-width: 260px;
+        }
+
+        body {
+            background-color: #ffffff;
+        }
+
+        #sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: #ffffff;
+            border-right: 1px solid #dee2e6;
+        }
+
+        #main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 1.5rem;
+        }
+
+        .search-input {
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            padding: 0.4rem 1rem 0.4rem 2.5rem;
+            width: 300px;
+            font-size: 0.9rem;
+        }
+
+        .dropdown-toggle.no-caret::after {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                margin-left: calc(-1 * var(--sidebar-width));
+            }
+            #sidebar.active {
+                margin-left: 0;
+            }
+            #main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+    </head>
+    <body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="sidebar flex-column flex-shrink-0 p-0">
+            <div class="p-4 border-bottom">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-shield-alt text-primary me-2"></i>
+                    <span class="fw-bold fs-5">HomeShield</span>
+                </div>
+            </div>
+
+            <ul class="nav nav-pills flex-column mb-auto mt-2 px-3">
+                <li class="nav-item">
+                    <a th:href="@{/}" class="nav-link text-dark" th:classappend="${activePage == 'dashboard' ? 'active' : ''}">
+                        <i class="fa-solid fa-chart-line me-2"></i>
+                        <span>Tableau de bord</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/clients}" class="nav-link text-dark" th:classappend="${activePage == 'clients' ? 'active' : ''}">
+                        <i class="fa-solid fa-users me-2"></i>
+                        <span>Gestion Clients</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/factures}" class="nav-link text-dark" th:classappend="${activePage == 'factures' ? 'active' : ''}">
+                        <i class="fa-solid fa-file-invoice-dollar me-2"></i>
+                        <span>Facturation / DV</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/bons-de-livraison}" class="nav-link text-dark" th:classappend="${activePage == 'bl' ? 'active' : ''}">
+                        <i class="fa-solid fa-truck-ramp-box me-2"></i>
+                        <span>Bons de Livraison</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/statistiques}" class="nav-link text-dark" th:classappend="${activePage == 'stats' ? 'active' : ''}">
+                        <i class="fa-solid fa-chart-pie me-2"></i>
+                        <span>Statistiques</span>
+                    </a>
+                </li>
+                <li>
+                    <a th:href="@{/export}" class="nav-link text-dark" th:classappend="${activePage == 'export' ? 'active' : ''}">
+                        <i class="fa-solid fa-file-export me-2"></i>
+                        <span>Exports / Rapports</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="p-3 border-top mt-auto">
+                <div class="d-flex align-items-center text-dark text-decoration-none">
+                    <div class="rounded-circle bg-light text-dark d-flex align-items-center justify-content-center me-2 border" style="width: 32px; height: 32px; font-weight: 700; font-size: 12px;">AD</div>
+                    <div class="small">
+                        <div class="fw-bold">Administrateur</div>
+                        <div class="text-muted" style="font-size: 10px;">HomeShield Maroc</div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-content" class="flex-grow-1">
+            <header class="topbar d-flex align-items-center justify-content-between sticky-top no-print">
+                <div class="position-relative">
+                    <i class="fa-solid fa-magnifying-glass position-absolute text-muted" style="left: 16px; top: 50%; transform: translateY(-50%);"></i>
+                    <form th:action="@{/recherche}" method="get">
+                        <input type="text" name="q" class="search-input" placeholder="Rechercher client, facture, BL...">
+                    </form>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="dropdown">
+                        <button class="btn btn-link text-dark p-0 position-relative dropdown-toggle no-caret" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                            <i class="fa-solid fa-bell"></i>
+                            <span th:if="${notifCount > 0}" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 8px;" th:text="${notifCount}">0</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-0 shadow border-0" aria-labelledby="notificationDropdown" style="width: 350px; border-radius: 12px; overflow: hidden;">
+                            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                                <h6 class="mb-0 fw-bold">Notifications</h6>
+                                <a href="javascript:void(0)" onclick="markAllAsRead()" class="small text-primary text-decoration-none">Tout marquer comme lu</a>
+                            </div>
+                            <div class="notification-list" style="max-height: 400px; overflow-y: auto;">
+                                <div th:if="${notifications == null || notifications.isEmpty()}" class="p-5 text-center">
+                                    <i class="fa-solid fa-circle-check text-success fs-1 mb-3"></i>
+                                    <p class="text-muted mb-0">Aucune notification en attente.</p>
+                                </div>
+                                <div th:each="notif : ${notifications}" class="p-3 border-bottom notification-item" th:classappend="${notificationsRead ? 'opacity-50' : ''}">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <span class="fw-bold small" th:text="${notif.numeroFacture}">FAC-001</span>
+                                        <span class="badge" th:classappend="${notif.type == 'danger' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning'}" style="font-size: 10px;" th:text="${notif.alertType == 'EN_RETARD' ? 'EN RETARD' : 'EXPIRATION PROCHE'}">TYPE</span>
+                                    </div>
+                                    <p class="mb-1 small text-dark" th:text="${notif.clientName}">Client Name</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span th:if="${notif.alertType == 'EN_RETARD'}" class="text-danger small fw-bold" th:text="${notif.days + ' jours de retard'}">X jours</span>
+                                        <span th:if="${notif.alertType == 'EXPIRATION_PROCHE'}" class="text-danger small fw-bold" th:text="${notif.days + ' jours restants'}">X jours</span>
+                                        <a th:href="@{'/factures/' + ${notif.factureId}}" class="btn btn-sm btn-link p-0 text-primary small">Voir</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-2 border-top bg-light text-center d-flex flex-column gap-1">
+                                <a th:href="@{/factures(statut='EN_RETARD')}" class="small text-dark text-decoration-none fw-medium">Voir toutes les factures en retard</a>
+                                <a th:href="@{/notifications}" class="small text-primary text-decoration-none">Voir tout l'historique</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="vr mx-2 text-muted opacity-25"></div>
+                    <div class="small fw-medium" th:text="${#temporals.format(#temporals.createNow(), 'EEEE d MMMM yyyy')}"></div>
+                </div>
+            </header>
+            
+            <div class="container-fluid p-4">
+                <div layout:fragment="content"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function markAllAsRead() {
+            $.post('/notifications/marquer-lu', function() {
+                $('.badge.rounded-pill.bg-danger').fadeOut();
+                $('.notification-item').addClass('opacity-50');
+            });
+        }
+
+        $(document).ready(function() {
+            // Auto-hide alerts
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+            
+            // Search loading indicator
+            $('form').on('submit', function() {
+                if ($(this).find('.search-input').val()) {
+                    const btn = $(this).find('button[type="submit"]');
+                    if (btn.length) {
+                        btn.prop('disabled', true);
+                        btn.html(`<span class="spinner-border spinner-border-sm"></span> Chargement...`);
+                    }
+                }
+            });
+        });
+    </script>
+    
+    <div th:replace="~{fragments/toast :: toast}"></div>
+    <th:block layout:fragment="scripts"></th:block>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Historique des Notifications</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-1">Notifications</h4>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/}">Accueil</a></li>
+                    <li class="breadcrumb-item active">Notifications</li>
+                </ol>
+            </nav>
+        </div>
+        <button onclick="markAllAsRead()" class="btn btn-outline-primary">
+            <i class="fas fa-check-double me-2"></i>Tout marquer comme lu
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Date Détection</th>
+                            <th>N° Facture</th>
+                            <th>Client</th>
+                            <th>Type d'Alerte</th>
+                            <th>Détails</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(fullHistory)}">
+                            <td colspan="6" class="text-center py-5">
+                                <i class="fa-solid fa-bell-slash text-muted fs-1 mb-3"></i>
+                                <p class="text-muted">Aucune notification détectée.</p>
+                            </td>
+                        </tr>
+                        <tr th:each="notif : ${fullHistory}">
+                            <td class="ps-4">
+                                <span class="text-muted small" th:text="${#temporals.format(notif.detectedAt, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold" th:text="${notif.numeroFacture}">FAC-001</span>
+                            </td>
+                            <td th:text="${notif.clientName}">Client Name</td>
+                            <td>
+                                <span class="badge" th:classappend="${notif.type == 'danger' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning'}" th:text="${notif.alertType == 'EN_RETARD' ? 'EN RETARD' : 'EXPIRATION PROCHE'}">TYPE</span>
+                            </td>
+                            <td>
+                                <span th:if="${notif.alertType == 'EN_RETARD'}" class="text-danger fw-medium" th:text="${notif.days + ' jours de retard'}">X jours</span>
+                                <span th:if="${notif.alertType == 'EXPIRATION_PROCHE'}" class="text-warning fw-medium" th:text="${notif.days + ' jours restants'}">X jours</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <a th:href="@{'/factures/' + ${notif.factureId}}" class="btn btn-sm btn-light border">
+                                    <i class="fas fa-external-link-alt me-1"></i> Aller à la facture
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

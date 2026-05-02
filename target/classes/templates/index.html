@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Tableau de Bord</title>
+    <style>
+        /* KPI Cards */
+        .kpi-card { 
+            border-left: 4px solid transparent; 
+            border-radius: 10px; 
+            transition: transform 0.2s;
+        }
+        .kpi-card:hover { transform: translateY(-2px); }
+        .kpi-ca-mois   { border-left-color: #198754; } /* green */
+        .kpi-ca-annee  { border-left-color: #0d6efd; } /* blue */
+        .kpi-client    { border-left-color: #ffc107; } /* gold */
+        .kpi-factures  { border-left-color: #6c757d; } /* gray */
+        .kpi-impayes   { border-left-color: #dc3545; } /* red */
+
+        .kpi-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a2e;
+            line-height: 1.2;
+        }
+        .kpi-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #6c757d;
+            margin-bottom: 6px;
+        }
+
+        /* Chart containers */
+        .chart-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            background: white;
+            height: 100%;
+        }
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* Overdue Alert */
+        .alert-retard {
+            background: #fff5f5;
+            border: 1px solid #f5c2c7;
+            border-left: 4px solid #dc3545;
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <!-- Overdue Warnings -->
+        <div th:if="${not #lists.isEmpty(overdueFactures)}" class="alert alert-retard mb-4 d-flex align-items-center justify-content-between">
+            <div>
+                <i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>
+                <span class="fw-bold text-danger">Attention :</span> 
+                Vous avez <span class="fw-bold" th:text="${#lists.size(overdueFactures)}">0</span> factures en retard de paiement.
+            </div>
+            <a th:href="@{/factures(statut='EN_RETARD')}" class="btn btn-sm btn-danger px-3">Gérer</a>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <h2 class="page-title fw-bold">Tableau de bord</h2>
+                <p class="text-muted">Bienvenue sur votre espace HomeShield. Voici le récapitulatif de votre activité.</p>
+            </div>
+        </div>
+
+        <!-- KPI Visual Hierarchy -->
+        <div class="row g-4 mb-4">
+            <!-- Hero Card: Revenue Month -->
+            <div class="col-xl-4 col-lg-6">
+                <div class="card h-100 p-3 shadow-sm border-0 kpi-card kpi-ca-mois">
+                    <div class="card-body">
+                        <h6 class="kpi-label">Chiffre d'affaires (Mois)</h6>
+                        <div class="kpi-value" th:text="${caMois != null ? #numbers.formatDecimal(caMois, 1, 2, 'COMMA') + ' MAD' : '0,00 MAD'}">0,00 MAD</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Secondary Card: Revenue Year -->
+            <div class="col-xl-4 col-lg-6">
+                <div class="card h-100 p-3 shadow-sm border-0 kpi-card kpi-ca-annee">
+                    <div class="card-body">
+                        <h6 class="kpi-label">Chiffre d'affaires (Année)</h6>
+                        <div class="kpi-value" th:text="${caAnnee != null ? #numbers.formatDecimal(caAnnee, 1, 2, 'COMMA') + ' MAD' : '0,00 MAD'}">0,00 MAD</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Client -->
+            <div class="col-xl-4 col-lg-6">
+                <div class="card h-100 p-3 shadow-sm border-0 kpi-card kpi-client">
+                    <div class="card-body">
+                        <h6 class="kpi-label">Meilleur Client (Mois)</h6>
+                        <div class="kpi-value text-truncate" style="font-size: 1.4rem;" th:text="${meilleurClient != null ? meilleurClient : 'Aucun'}">Client</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices count -->
+            <div class="col-md-6">
+                <div class="card h-100 p-3 shadow-sm border-0 kpi-card kpi-factures">
+                    <div class="card-body">
+                        <h6 class="kpi-label">Factures ce mois</h6>
+                        <div class="kpi-value" th:text="${nbFacturesMois}">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unpaid invoices -->
+            <div class="col-md-6">
+                <div class="card h-100 p-3 shadow-sm border-0 kpi-card kpi-impayes">
+                    <div class="card-body">
+                        <h6 class="kpi-label">Factures impayées</h6>
+                        <div class="kpi-value" th:classappend="${nbFacturesImpayees > 0 ? 'text-danger' : ''}" th:text="${nbFacturesImpayees}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Revenue Chart -->
+            <div class="col-lg-8">
+                <div class="chart-card shadow-sm">
+                    <div class="chart-title">ÉVOLUTION DU CHIFFRE D'AFFAIRES (MAD)</div>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="caChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- Status Distribution -->
+            <div class="col-lg-4">
+                <div class="chart-card shadow-sm">
+                    <div class="chart-title">RÉPARTITION PAR MODE DE RÈGLEMENT</div>
+                    <div class="d-flex align-items-center" style="height: 300px; position: relative;">
+                        <canvas id="statutChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest Invoices -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-0">
+                        <h5 class="mb-0 fw-bold">Dernières Factures</h5>
+                        <a th:href="@{/factures}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>N° Facture</th>
+                                    <th>Client</th>
+                                    <th>Date</th>
+                                    <th>Montant TTC</th>
+                                    <th>Statut</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="f : ${dernieresFactures}" th:onclick="'window.location.href=\'/factures/' + ${f.id} + '\''">
+                                    <td><span class="fw-bold" th:text="${f.numeroFacture}">DV-000</span></td>
+                                    <td th:text="${f.client.raisonSociale}">Client</td>
+                                    <td th:text="${#temporals.format(f.dateProposition, 'dd/MM/yyyy')}">Date</td>
+                                    <td class="fw-bold text-dark" th:text="${#numbers.formatDecimal(f.totalTTC, 1, 2, 'COMMA')} + ' MAD'">0,00</td>
+                                    <td>
+                                        <div th:replace="~{fragments/badges :: factureStatus(${f.statutFacture})}"></div>
+                                    </td>
+                                    <td class="text-end">
+                                        <a th:href="@{/factures/{id}(id=${f.id})}" class="btn btn-sm btn-light"><i class="fa-solid fa-eye"></i></a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script th:inline="javascript">
+            // Brand Colors
+            const HS_COLORS = {
+                primary: '#0d6efd',
+                secondary: '#6c757d',
+                success: '#198754',
+                info: '#0dcaf0',
+                warning: '#ffc107',
+                danger: '#dc3545',
+                light: '#f8f9fa'
+            };
+
+            // Evolution Chart
+            const caLabels = /*[[${chartLabels}]]*/ [];
+            const caValues = /*[[${chartData}]]*/ [];
+            
+            new Chart(document.getElementById('caChart'), {
+                type: 'bar',
+                data: {
+                    labels: caLabels,
+                    datasets: [{
+                        label: 'Chiffre d\'Affaires (MAD)',
+                        data: caValues,
+                        backgroundColor: '#198754',
+                        hoverBackgroundColor: '#157347',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Status Distribution Chart
+            const statusMap = /*[[${statusDistribution}]]*/ {};
+            const HS_CHART_COLORS = {
+                'Chèque': '#0d6efd',
+                'Virement': '#198754',
+                'Espèces': '#ffc107',
+                'Carte Bancaire': '#dc3545',
+                'Non défini': '#6c757d'
+            };
+            
+            const labels = Object.keys(statusMap);
+            const backgroundColors = labels.map(l => HS_CHART_COLORS[l] || '#adb5bd');
+
+            new Chart(document.getElementById('statutChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: Object.values(statusMap),
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                    },
+                    cutout: '70%'
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html>

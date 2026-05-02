@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title th:text="'Résultats pour « ' + ${q} + ' »'">Résultats de recherche</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Résultats pour « <span th:text="${q}"></span> »</h1>
+        </div>
+
+        <div th:if="${#lists.isEmpty(clients) and #lists.isEmpty(factures)}" class="text-center py-5">
+            <i class="fa-solid fa-magnifying-glass fa-4x text-muted mb-3 opacity-25"></i>
+            <h3 class="text-muted">Aucun résultat trouvé pour « <span th:text="${q}"></span> »</h3>
+            <p class="text-muted">Essayez avec d'autres mots-clés ou vérifiez l'orthographe.</p>
+            <a th:href="@{/}" class="btn btn-primary mt-3">Retour au tableau de bord</a>
+        </div>
+
+        <!-- Clients Section -->
+        <div th:if="${not #lists.isEmpty(clients)}" class="mb-5">
+            <div class="d-flex align-items-center mb-3">
+                <i class="fa-solid fa-user-group me-2 text-primary"></i>
+                <h4 class="mb-0">Clients trouvés</h4>
+                <span class="badge bg-primary ms-2" th:text="${#lists.size(clients)}">0</span>
+            </div>
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Code</th>
+                                <th>Raison Sociale</th>
+                                <th>Type</th>
+                                <th>Ville</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="c : ${clients}">
+                                <td class="fw-bold" th:text="${c.codeClient}"></td>
+                                <td th:text="${c.raisonSociale}"></td>
+                                <td th:text="${c.typeClient.libelle}"></td>
+                                <td th:text="${c.ville}"></td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a th:href="@{/clients/{id}(id=${c.id})}" class="btn btn-sm btn-info text-white" title="Voir">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        <a th:href="@{/clients/{id}/modifier(id=${c.id})}" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Factures Section -->
+        <div th:if="${not #lists.isEmpty(factures)}">
+            <div class="d-flex align-items-center mb-3">
+                <i class="fa-solid fa-file-invoice-dollar me-2 text-success"></i>
+                <h4 class="mb-0">Factures trouvées</h4>
+                <span class="badge bg-success ms-2" th:text="${#lists.size(factures)}">0</span>
+            </div>
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>N° Facture</th>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th class="text-end">Montant TTC</th>
+                                <th>Statut</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="f : ${factures}">
+                                <td class="fw-bold" th:text="${f.numeroFacture}"></td>
+                                <td th:text="${f.client.raisonSociale}"></td>
+                                <td th:text="${#temporals.format(f.dateProposition, 'dd/MM/yyyy')}"></td>
+                                <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(f.totalTTC, 1, 2, 'COMMA')} + ' MAD'"></td>
+                                <td>
+                                    <div th:replace="~{fragments/badges :: factureStatus(${f.statutFacture})}"></div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a th:href="@{/factures/{id}(id=${f.id})}" class="btn btn-sm btn-outline-primary" title="Voir">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Centre d'Exports et Rapports</title>
+    <style>
+        .export-card {
+            transition: all 0.3s ease;
+            border: 1px solid #edf2f7;
+            height: 100%;
+        }
+        .export-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+            border-color: #cbd5e0;
+        }
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        .bg-excel-light { background-color: #e6fffa; color: #38a169; }
+        .bg-report-light { background-color: #ebf8ff; color: #3182ce; }
+        .bg-user-light { background-color: #faf5ff; color: #805ad5; }
+        
+        .client-row {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .client-row:hover {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="pt-3 pb-2 mb-4 border-bottom">
+            <h1 class="h2 fw-bold">Exports et Rapports</h1>
+            <p class="text-muted">Générez des rapports détaillés et exportez vos données au format Excel.</p>
+        </div>
+
+        <!-- Section 1: Exports de données -->
+        <section class="mb-5">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-primary rounded-circle p-2 me-3" style="width: 8px; height: 8px;"></div>
+                <h4 class="mb-0 fw-bold">Exports de données</h4>
+            </div>
+            
+            <div class="row g-4">
+                <!-- Toutes les factures -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card export-card shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <div class="icon-box bg-excel-light">
+                                <i class="fa-solid fa-file-excel fa-xl"></i>
+                            </div>
+                            <h5 class="fw-bold">Toutes les factures</h5>
+                            <p class="text-muted small mb-4">Toutes les factures enregistrées avec statuts et montants.</p>
+                            <a th:href="@{/export/factures/excel}" class="btn btn-outline-success w-100">
+                                <i class="fa-solid fa-download me-2"></i>Télécharger
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Factures filtrées -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card export-card shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <div class="icon-box bg-excel-light">
+                                <i class="fa-solid fa-filter fa-xl"></i>
+                            </div>
+                            <h5 class="fw-bold">Factures filtrées</h5>
+                            <p class="text-muted small mb-3">Export avec filtres de statut et de période.</p>
+                            <form th:action="@{/export/factures/excel}" method="get">
+                                <div class="mb-2">
+                                    <select name="statut" class="form-select form-select-sm">
+                                        <option value="">Tous les statuts</option>
+                                        <option th:each="s : ${statuts}" th:value="${s}" th:text="${s.libelle}"></option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fa-solid fa-download me-2"></i>Exporter
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tous les clients -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card export-card shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <div class="icon-box bg-user-light">
+                                <i class="fa-solid fa-users fa-xl"></i>
+                            </div>
+                            <h5 class="fw-bold">Tous les clients</h5>
+                            <p class="text-muted small mb-4">Liste complète des clients avec coordonnées et totaux.</p>
+                            <a th:href="@{/export/clients/excel}" class="btn btn-outline-purple" style="color: #805ad5; border-color: #805ad5;">
+                                <i class="fa-solid fa-download me-2"></i>Télécharger
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bons de Livraison -->
+                <div class="col-md-6 col-xl-3">
+                    <div class="card export-card shadow-sm border-0">
+                        <div class="card-body p-4">
+                            <div class="icon-box bg-report-light">
+                                <i class="fa-solid fa-truck-fast fa-xl"></i>
+                            </div>
+                            <h5 class="fw-bold">Bons de Livraison</h5>
+                            <p class="text-muted small mb-4">Export de tous les BLs avec suivi de livraison.</p>
+                            <a th:href="@{/export/bons-de-livraison/excel}" class="btn btn-outline-primary w-100">
+                                <i class="fa-solid fa-download me-2"></i>Télécharger
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Rapports par client -->
+        <section class="mb-5">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-purple rounded-circle p-2 me-3" style="width: 8px; height: 8px; background-color: #805ad5;"></div>
+                <h4 class="mb-0 fw-bold">Rapports par client</h4>
+            </div>
+
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-white p-3 border-0">
+                    <div class="position-relative">
+                        <i class="fa-solid fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" id="clientSearch" class="form-control ps-5" placeholder="Rechercher un client...">
+                    </div>
+                </div>
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light sticky-top">
+                            <tr>
+                                <th class="ps-4">Client</th>
+                                <th>Factures</th>
+                                <th>Total Facturé</th>
+                                <th class="text-end pe-4">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientTableBody">
+                            <tr th:each="c : ${clients}" class="client-row" th:onclick="'window.location.href=\'/clients/' + ${c.id} + '/export/excel\''">
+                                <td class="ps-4">
+                                    <div class="fw-bold" th:text="${c.raisonSociale}">Client Name</div>
+                                    <div class="small text-muted" th:text="${c.codeClient}">CODE</div>
+                                </td>
+                                <td th:text="${#lists.size(c.factures)}">0</td>
+                                <td class="fw-medium text-dark" th:text="${#numbers.formatDecimal(c.factures.stream().map(f -> f.totalTTC).reduce(T(java.math.BigDecimal).ZERO, (a, b) -> a.add(b)), 1, 2, 'COMMA')} + ' MAD'">0.00</td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-light border">
+                                        <i class="fa-solid fa-file-excel text-success me-1"></i> Historique
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Rapports périodiques -->
+        <section class="mb-5">
+            <div class="d-flex align-items-center mb-4">
+                <div class="bg-info rounded-circle p-2 me-3" style="width: 8px; height: 8px;"></div>
+                <h4 class="mb-0 fw-bold">Rapports périodiques</h4>
+            </div>
+
+            <div class="row g-4">
+                <!-- Rapport Mensuel -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="fa-solid fa-calendar-day text-primary me-2"></i>Rapport mensuel</h5>
+                            <form th:action="@{/export/rapport-mensuel}" method="get">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-7">
+                                        <select name="month" class="form-select">
+                                            <option value="1">Janvier</option>
+                                            <option value="2">Février</option>
+                                            <option value="3">Mars</option>
+                                            <option value="4" selected>Avril</option>
+                                            <option value="5">Mai</option>
+                                            <option value="6">Juin</option>
+                                            <option value="7">Juillet</option>
+                                            <option value="8">Août</option>
+                                            <option value="9">Septembre</option>
+                                            <option value="10">Octobre</option>
+                                            <option value="11">Novembre</option>
+                                            <option value="12">Décembre</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-5">
+                                        <input type="number" name="year" class="form-control" th:value="${currentYear}">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Générer le rapport</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rapport Annuel -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="fa-solid fa-chart-line text-success me-2"></i>Rapport annuel</h5>
+                            <form th:action="@{/export/rapport-annuel}" method="get">
+                                <div class="mb-3">
+                                    <input type="number" name="year" class="form-control" th:value="${currentYear}">
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">Générer l'année</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rapport Personnalisé -->
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3"><i class="fa-solid fa-sliders text-warning me-2"></i>Personnalisé</h5>
+                            <form th:action="@{/export/rapport-personnalise}" method="get">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6"><input type="date" name="start" class="form-control form-control-sm" required></div>
+                                    <div class="col-6"><input type="date" name="end" class="form-control form-control-sm" required></div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="factures" value="true" checked>
+                                        <label class="form-check-label small">Factures</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="passages" value="true" checked>
+                                        <label class="form-check-label small">Passages</label>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-dark w-100">Générer sur mesure</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            $(document).ready(function() {
+                $("#clientSearch").on("keyup", function() {
+                    var value = $(this).val().toLowerCase();
+                    $("#clientTableBody tr").filter(function() {
+                        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                    });
+                });
+            });
+        </script>
+    </th:block>
+</body>
+</html>

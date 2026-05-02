@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title th:text="${client.id == null ? 'Nouveau Client' : 'Modifier le Client'}">Client</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2" th:text="${client.id == null ? 'Nouveau Client' : 'Modifier le Client'}">Client</h1>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form th:action="@{/clients/enregistrer}" th:object="${client}" method="post" class="row g-3">
+                    <input type="hidden" th:field="*{id}" />
+                    
+                    <div class="col-md-6">
+                        <label for="raisonSociale" class="form-label">Raison Sociale <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{raisonSociale}" class="form-control" th:classappend="${#fields.hasErrors('raisonSociale')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('raisonSociale')}" th:errors="*{raisonSociale}"></div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="codeClient" class="form-label">Code Client <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{codeClient}" class="form-control" th:classappend="${#fields.hasErrors('codeClient')} ? 'is-invalid'" placeholder="Ex: CL-001">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('codeClient')}" th:errors="*{codeClient}"></div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="typeClient" class="form-label">Type de Client <span class="text-danger">*</span></label>
+                        <select th:field="*{typeClient}" class="form-select" th:classappend="${#fields.hasErrors('typeClient')} ? 'is-invalid'">
+                            <option value="">Sélectionner un type...</option>
+                            <option th:each="t : ${types}" th:value="${t}" th:text="${t.libelle}"></option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('typeClient')}" th:errors="*{typeClient}"></div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{telephone}" class="form-control" th:classappend="${#fields.hasErrors('telephone')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('telephone')}" th:errors="*{telephone}"></div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" th:field="*{email}" class="form-control" th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label for="adresse" class="form-label">Adresse</label>
+                        <input type="text" th:field="*{adresse}" class="form-control">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="ville" class="form-label">Ville</label>
+                        <input type="text" th:field="*{ville}" class="form-control">
+                    </div>
+
+                    <div class="col-12">
+                        <label for="notes" class="form-label">Notes / Commentaires</label>
+                        <textarea th:field="*{notes}" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="col-12 d-flex justify-content-end gap-2 mt-4">
+                        <a th:href="@{/clients}" class="btn btn-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-primary px-4">Enregistrer le Client</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

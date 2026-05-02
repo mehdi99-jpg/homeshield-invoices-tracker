@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title>Gestion des Clients</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Gestion des Clients</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <a th:href="@{/clients/nouveau}" class="btn btn-primary">
+                    <i class="fa-solid fa-user-plus me-1"></i> Nouveau Client
+                </a>
+            </div>
+        </div>
+
+        <div class="card border-0 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="clientsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Code</th>
+                            <th>Raison Sociale</th>
+                            <th>Type</th>
+                            <th>Ville</th>
+                            <th>Email</th>
+                            <th>Factures</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c : ${clients}" th:onclick="'window.location.href=\'/clients/' + ${c.id} + '\''">
+                            <td class="fw-bold text-dark" th:text="${c.codeClient}">CL-001</td>
+                            <td>
+                                <div class="fw-medium text-dark" th:text="${c.raisonSociale}">Nom</div>
+                                <div class="text-muted" style="font-size: 11px;" th:text="${c.ville}">Ville</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${c.typeClient.libelle}">TYPE</span>
+                            </td>
+                            <td th:text="${c.ville}">Ville</td>
+                            <td th:text="${c.email}">email@test.com</td>
+                            <td>
+                                <span class="badge-statut badge-payee" th:text="${#lists.size(c.factures)} + ' factures'">0</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a th:href="@{/clients/{id}(id=${c.id})}" class="btn btn-sm btn-light text-primary" onclick="event.stopPropagation()" title="Voir">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    <a th:href="@{/clients/{id}/modifier(id=${c.id})}" class="btn btn-sm btn-light text-secondary" onclick="event.stopPropagation()" title="Modifier">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-light text-danger" title="Supprimer"
+                                            onclick="event.stopPropagation()"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalSupprimerClient"
+                                            th:data-client-id="${c.id}"
+                                            th:data-client-nom="${c.raisonSociale}">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal Suppression Client -->
+        <div class="modal fade" id="modalSupprimerClient" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content overflow-hidden">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title">
+                            <i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>
+                            Confirmer la suppression
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body py-4">
+                        Êtes-vous sûr de vouloir supprimer le client <strong id="modalClientNom"></strong> ?
+                        <br><small class="text-muted">Cette action est irréversible et affectera toutes les factures associées.</small>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">
+                            Annuler
+                        </button>
+                        <form id="modalSupprimerForm" method="post">
+                            <button type="submit" class="btn btn-danger px-4">
+                                Supprimer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            $(document).ready(function() {
+                $('#modalSupprimerClient').on('show.bs.modal', function(event) {
+                    const btn = $(event.relatedTarget);
+                    const id = btn.data('client-id');
+                    const nom = btn.data('client-nom');
+                    
+                    $('#modalClientNom').text(nom);
+                    $('#modalSupprimerForm').attr('action', '/clients/' + id + '/supprimer');
+                });
+            });
+        </script>
+    </th:block>
+</body>
+</html>

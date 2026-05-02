@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title th:text="'Bon de Livraison ' + ${bl.numeroBL}">Détail BL</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">Bon de Livraison : <span th:text="${bl.numeroBL}">BL-001</span></h1>
+            <div class="btn-toolbar mb-2 mb-md-0 gap-2">
+                <a th:href="@{/bons-de-livraison/{id}/imprimer(id=${bl.id})}" class="btn btn-sm btn-outline-dark">
+                    <i class="fa-solid fa-print me-1"></i> Imprimer
+                </a>
+                <a th:href="@{/bons-de-livraison}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Retour
+                </a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Détails de Livraison</h5>
+                        <div th:replace="~{fragments/badges :: blStatus(${bl.statutLivraison})}"></div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-sm-6">
+                                <h6 class="text-muted small text-uppercase fw-bold mb-3">Informations BL</h6>
+                                <p class="mb-1"><strong>N° BL :</strong> <span th:text="${bl.numeroBL}">BL-XXXX</span></p>
+                                <p class="mb-1"><strong>Date émission :</strong> <span th:text="${#temporals.format(bl.dateEmission, 'dd/MM/yyyy')}">Date</span></p>
+                                <p class="mb-1"><strong>Date livraison :</strong> <span th:text="${bl.dateLivraison != null ? #temporals.format(bl.dateLivraison, 'dd/MM/yyyy') : 'Non renseignée'}">Date</span></p>
+                                <p class="mb-1"><strong>Lié à la facture :</strong> <a th:href="@{/factures/{id}(id=${bl.facture.id})}" th:text="${bl.facture.numeroFacture}">F-XX</a></p>
+                            </div>
+                            <div class="col-sm-6">
+                                <h6 class="text-muted small text-uppercase fw-bold mb-3">Lieu de Livraison (Maroc)</h6>
+                                <p class="mb-0" th:text="${bl.adresseLivraison}">Adresse...</p>
+                            </div>
+                        </div>
+
+                        <h6 class="text-muted small text-uppercase fw-bold mb-3">Produits / Services livrés</h6>
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Désignation</th>
+                                    <th class="text-center" style="width: 100px;">Quantité</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="ligne : ${bl.facture.lignes}">
+                                    <td th:text="${ligne.designation}">Produit</td>
+                                    <td class="text-center fw-bold" th:text="${ligne.quantite}">1</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div th:if="${bl.commentaires}" class="mt-4">
+                            <h6 class="text-muted small text-uppercase fw-bold mb-2">Commentaires</h6>
+                            <p class="mb-0 small p-2 bg-light rounded" th:text="${bl.commentaires}">Comms...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Client</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="mb-1" th:text="${bl.facture.client.raisonSociale}">Client Name</h6>
+                        <p class="text-muted small mb-3" th:text="${bl.facture.client.codeClient}">CL-001</p>
+                        <hr>
+                        <p class="mb-1 small text-muted"><i class="fa-solid fa-phone me-2"></i> <span th:text="${bl.facture.client.telephone}"></span></p>
+                        <p class="mb-1 small text-muted"><i class="fa-solid fa-envelope me-2"></i> <span th:text="${bl.facture.client.email}"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
